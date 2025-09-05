@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wahl-o-Shop • Shopsystem-Wizard (IONOS, STRATO, Shopify)</title>
+  <meta name="theme-color" content="#1976d2">
+  <meta name="robots" content="noindex">
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#fff; --muted:#6b7280; --text:#0f172a; --primary:#1976d2;
+      --radius:12px; --elev: 0 6px 20px rgba(25,118,210,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--text);background:var(--bg)}
+    .container{max-width:1100px;margin:28px auto;padding:20px}
+    header{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+    .logo{width:56px;height:56px;min-width:56px;max-width:56px;border-radius:12px;background:linear-gradient(180deg,var(--primary),#1565c0);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:var(--elev)}
+    h1{margin:0;font-size:22px}
+    .subtitle{color:var(--muted);font-size:14px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 2px 8px rgba(16,24,40,.06);}
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .progress{height:10px;background:#e8f3ff;border-radius:999px;overflow:hidden}
+    .progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),#4dabf5);transition:width .28s ease}
+    .question h2{margin:0 0 6px 0;font-size:18px}
+    .explain{color:var(--muted);font-size:13px;margin-bottom:8px}
+    .chips{display:flex;flex-wrap:wrap;gap:10px}
+    .chip{padding:10px 14px;border-radius:999px;background:#f8fafc;border:1px solid #e6f0ff;cursor:pointer;display:inline-flex;align-items:center;transition:all .12s ease}
+    .chip.active{background:linear-gradient(90deg,var(--primary),#2ea0ff);color:#fff;box-shadow:0 8px 24px rgba(46,125,255,.12)}
+    .toolbar{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:12px}
+    .btn{padding:8px 14px;border-radius:10px;border:none;cursor:pointer;background:#fff;border:1px solid #e6f0ff}
+    .btn.primary{background:linear-gradient(90deg,var(--primary),#1565c0);color:#fff;border:0}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .col-6{grid-column:span 6}
+    .col-8{grid-column:span 8}
+    .col-4{grid-column:span 4}
+    .col-12{grid-column:span 12}
+    @media(max-width:900px){.col-6,.col-4{grid-column:span 12}}
+    .meter{height:10px;background:#eef6ff;border-radius:999px;overflow:hidden}
+    .meter>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2e7dff,#06a6ff);transition:width .3s ease}
+    .price{font-weight:800;font-size:18px}
+    .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:#f1f9ff;border:1px solid #dfeffd;font-size:12px;margin-right:6px}
+    footer{color:var(--muted);font-size:13px;margin-top:22px;text-align:center}
+    dialog{border:none;border-radius:12px;padding:0}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">WS</div>
+      <div>
+        <h1>Wahl-o-Shop</h1>
+        <div class="subtitle">Wizard zur Auswahl von IONOS, STRATO oder Shopify — Vorschläge basierend auf dem besten Match.</div>
+      </div>
+    </header>
+
+    <main class="stack">
+      <div class="card">
+        <div class="stack">
+          <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+          <div class="grid" style="align-items:center">
+            <div class="col-8"><strong>Beantworte die Fragen</strong> — am Ende siehst du Match-Prozent und empfohlene Tarife.</div>
+            <div class="col-4" style="text-align:right"><button id="reset" class="btn">Zurücksetzen</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="screens"></div>
+    </main>
+
+    <footer>© Martin Voigt <span id="year">2025</span> Wahl-o-Shop — Datenbasis: Nutzerrecherche & Anbieterangaben. Keine Gewähr.</footer>
+  </div>
+
+<script>
+/* -------------------------------
+   Anbieter, Tarife & Capabilities
+   ------------------------------- */
+const PROVIDERS = {
+  ionos: {
+    id:'ionos', name:'IONOS', url:'https://www.ionos.de',
+    tiers:[
+      {id:'starter', name:'Starter', price:22, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','prod-500','categories','variants-basic','domain','ssl-wildcard','email-1x-2gb',
+                      'templates-basic','import-csv','payments-basic','shipping-basic','seo-basic','gdpr-templates','support-24-7' ]},
+      {id:'plus', name:'Plus', price:30, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','prod-5000','categories','variants-adv','domain','ssl-wildcard','email-1x-12gb',
+                      'templates-adv','import-csv','export-csv','payments-adv','shipping-adv','seo-basic','gdpr-templates','support-24-7','order-edit-basic' ]},
+      {id:'pro', name:'Pro', price:62, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-10000','categories','filters','variants-adv','domain','ssl-wildcard','email-1x-50gb',
+                      'templates-adv','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-templates','inventory','workflows-basic','manual-orders','pos','support-24-7','market-google' ]},
+      {id:'expert', name:'Expert', price:92, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-unlimited','categories','filters','variants-adv','domain','ssl-wildcard','email-1x-50gb',
+                      'templates-adv','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-templates','inventory-adv','workflows-adv','manual-orders','pos','support-24-7','market-amazon-ebay' ]}
+    ]
+  },
+  strato: {
+    id:'strato', name:'STRATO', url:'https://www.strato.de',
+    tiers:[
+      {id:'basic', name:'Basic', price:16, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','prod-1000','categories','variants-basic','domain','ssl-basic','email-1x-5gb','templates-basic','import-csv','payments-adv','shipping-basic','seo-basic','gdpr-templates','support-030' ]},
+      {id:'plus', name:'Plus', price:33, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','prod-5000','categories','variants-adv','domain','ssl-basic','email-1x-5gb','templates-adv','import-csv','export-csv','payments-adv','shipping-basic','seo-basic','gdpr-templates','support-030' ]},
+      {id:'pro', name:'Pro', price:51, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-10000','categories','filters','variants-adv','domain','ssl-basic','email-1x-5gb','templates-adv','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-templates','inventory','workflows-basic','manual-orders','pos','support-030' ]},
+      {id:'ultimate', name:'Ultimate', price:89, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-unlimited','categories','filters','variants-adv','domain','ssl-basic','email-1x-5gb','templates-adv','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-templates','inventory-adv','workflows-adv','manual-orders','pos','support-030','market-amazon-ebay' ]}
+    ]
+  },
+  shopify: {
+    id:'shopify', name:'Shopify', url:'https://www.shopify.de',
+    tiers:[
+      {id:'starter', name:'Starter', price:5, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','prod-unlimited','categories','variants-basic','ssl-auto','email-forward','templates-1','import-csv','payments-basic','shipping-basic','seo-basic','gdpr-apps','inventory-basic','support-mail' ]},
+      {id:'basic', name:'Basic', price:33, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','prod-unlimited','categories','filters','variants-adv','ssl-auto','email-forward','templates-many','import-csv','export-csv','payments-adv','shipping-adv','seo-adv','gdpr-apps','inventory','manual-orders','pos','support-24-7' ]},
+      {id:'grow', name:'Shopify', price:88, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-unlimited','categories','filters','variants-adv','ssl-auto','email-forward','templates-pro','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-apps','inventory-adv','workflows-basic','manual-orders','pos','market-apps','support-priority' ]},
+      {id:'advanced', name:'Advanced', price:384, currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-unlimited','categories','filters','variants-adv','ssl-auto','email-forward','templates-pro','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-apps','inventory-adv','workflows-adv','manual-orders','pos','market-apps','support-priority' ]},
+      {id:'plus', name:'Plus', price:'ab 2.300', currency:'€', period:'/Monat',
+       capabilities:[ 'b2c','b2b','prod-unlimited','categories','filters','variants-adv','ssl-auto','email-forward','templates-pro','import-csv','export-csv','payments-adv','shipping-rt','seo-adv','gdpr-apps','inventory-adv','workflows-adv','manual-orders','pos','market-amazon-ebay','support-enterprise' ]}
+    ]
+  }
+};
+
+/* -------------------------------
+   Fragen mit Erklärungen + Gewichtungen
+   Gewicht: 0..3 (3 = sehr wichtig für Anbieter)
+   ------------------------------- */
+const QUESTIONS = [
+  { id:'b2', title:'B2C und/oder B2B?', description:'Verkaufst du an Endkunden (B2C), Geschäftskunden (B2B) oder beides? B2B erfordert oft Netto-/Kundengruppen-Funktionen.',
+    options:[
+      { id:'only-b2c', label:'Nur B2C', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'b2b', label:'Auch B2B nötig (Kundengruppen, Nettopreise)', requires:['b2b'], weights:{ionos:3,strato:3,shopify:2} }
+    ]},
+  { id:'products', title:'Wie viele Produkte benötigst du?', description:'Wie groß ist dein Katalog (inkl. Varianten)? Manche Tarife haben Limits, andere sind unbegrenzt.',
+    options:[
+      { id:'up-to-500', label:'Bis 500', weights:{ionos:3,strato:2,shopify:1}, requires:['prod-500','prod-1000','prod-5000','prod-10000','prod-unlimited'] },
+      { id:'up-to-10k', label:'Bis 10.000', weights:{ionos:3,strato:3,shopify:2}, requires:['prod-5000','prod-10000','prod-unlimited'] },
+      { id:'unlimited', label:'Unbegrenzt', weights:{ionos:2,strato:3,shopify:3}, requires:['prod-unlimited'] }
+    ]},
+  { id:'categories', title:'Produktkategorien & Filter', description:'Brauchen Produkte Kategorien, Unterkategorien oder Filter (z. B. Farbe, Material)?',
+    options:[
+      { id:'simple', label:'Einfache Kategorien', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'filters', label:'Kategorien + Filter/Attribute', requires:['filters'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'priceDisplay', title:'Preis-Darstellung', description:'Muss der Shop Brutto/Netto anzeigen, Staffelpreise oder Streichpreise unterstützen?',
+    options:[
+      { id:'standard', label:'Standard (Brutto, Sale)', weights:{ionos:2,strato:2,shopify:3} },
+      { id:'b2bpricing', label:'B2B-Netto & Kundenspezifische Preise', requires:['b2b'], weights:{ionos:3,strato:3,shopify:2} }
+    ]},
+  { id:'linking', title:'Produktverknüpfungen', description:'Cross-Selling, Empfehlungen, Zubehör oder Bundles wichtig?',
+    options:[
+      { id:'related', label:'Einfach: ähnliche/empfohlene Produkte', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'bundles', label:'Bundles / Produkt-Sets', weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'variants', title:'Produktvarianten', description:'Benötigst du einfache Varianten (Farbe/Größe) oder komplexe Varianten mit eigenem Bestand?',
+    options:[
+      { id:'variants-basic', label:'Basisvarianten', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'variants-adv', label:'Komplexe Varianten & Variantenbestand', requires:['variants-adv'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'domain', title:'Domain inklusive?', description:'Ist dir eine Domain im Tarif wichtig (oft 1 Jahr kostenlos bei IONOS/STRATO)?',
+    options:[
+      { id:'domain-yes', label:'Ja, Domain inklusive', requires:['domain'], weights:{ionos:3,strato:3,shopify:1} },
+      { id:'domain-no', label:'Nein / externe Domain', weights:{ionos:1,strato:1,shopify:3} }
+    ]},
+  { id:'ssl', title:'SSL-Zertifikat', description:'Braucht der Tarif ein Wildcard-Zertifikat (für Sub-Domains) oder reicht ein Standard-SSL (Let\'s Encrypt)?',
+    options:[
+      { id:'ssl-auto', label:'Automatisches SSL (Let\'s Encrypt)', requires:['ssl-auto','ssl-basic'], weights:{ionos:2,strato:2,shopify:3} },
+      { id:'ssl-wildcard', label:'Wildcard-SSL gewünscht', requires:['ssl-wildcard'], weights:{ionos:3,strato:1,shopify:1} }
+    ]},
+  { id:'email', title:'Echte E-Mail-Postfächer', description:'Brauchst du echte Postfächer mit Speicher (oder reicht Weiterleitung an externe Dienstleister)?',
+    options:[
+      { id:'email-inbox', label:'Echte Postfächer inkl. Speicher', requires:['email-1x-2gb','email-1x-5gb','email-1x-12gb','email-1x-50gb'], weights:{ionos:3,strato:3,shopify:0} },
+      { id:'email-forward', label:'Weiterleitung / externe Maildienste', requires:['email-forward'], weights:{ionos:1,strato:1,shopify:3} }
+    ]},
+  { id:'templates', title:'Templates & Anpassbarkeit', description:'Reicht ein visueller Editor oder brauchst du volle Kontrolle bzgl. des Designs?',
+    options:[
+      { id:'templates-visual', label:'Visueller Editor & Vorlagen', requires:['templates-basic','templates-adv','templates-many'], weights:{ionos:3,strato:3,shopify:2} },
+      { id:'templates-deep', label:'Vollständige Individualisierung (Code)', requires:['templates-pro','templates-adv'], weights:{ionos:1,strato:1,shopify:3} }
+    ]},
+  { id:'import', title:'Import Produkte & Bilder', description:'Müsst du viele Produkte inkl. Bildern importieren (CSV/ZIP/Medien)?',
+    options:[
+      { id:'import-csv', label:'CSV-Import reicht', requires:['import-csv'], weights:{ionos:2,strato:2,shopify:2} },
+      { id:'import-bulk', label:'Bulk Import inkl. Bilder', requires:['import-csv'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'export', title:'Export für Steuerberater', description:'Brauchst du CSV/DATEV-Exporte für die Buchhaltung/Steuerberater?',
+    options:[
+      { id:'export-none', label:'Nicht notwendig', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'export-csv', label:'CSV/DATEV Export erforderlich', requires:['export-csv','export-csv-adv'], weights:{ionos:2,strato:3,shopify:3} }
+    ]},
+  { id:'payments', title:'Zahlungsmethoden', description:'Welche Zahlungsarten sind erforderlich (Karte, PayPal, Rechnung, Klarna)?',
+    options:[
+      { id:'payments-basic', label:'PayPal & Kreditkarte', requires:['payments-basic','payments-adv'], weights:{ionos:2,strato:2,shopify:2} },
+      { id:'payments-adv', label:'Viele lokale Methoden & Wallets', requires:['payments-adv'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'shipping', title:'Versandoptionen', description:'Reicht ein einfaches Versandprofil oder brauchst du Echtzeittarife / Multi-Carrier?',
+    options:[
+      { id:'shipping-basic', label:'Einfache Versandprofile', requires:['shipping-basic','shipping-rt'], weights:{ionos:2,strato:2,shopify:2} },
+      { id:'shipping-rt', label:'Echtzeit-Tarife & Multi-Carrier', requires:['shipping-rt'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'seo', title:'SEO & Online-Marketing', description:'Brauchst du erweiterte SEO-Funktionen, Pixel, Google Shopping, Social Shops?',
+    options:[
+      { id:'seo-basic', label:'Basis SEO & Tracking', requires:['seo-basic'], weights:{ionos:2,strato:2,shopify:2} },
+      { id:'seo-adv', label:'Erweitertes Marketing & Shops/Apps', requires:['seo-adv'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'marketplaces', title:'Marktplatz-Integration', description:'Sollen Produkte auf Google Shopping, Amazon oder eBay verkauft werden?',
+    options:[
+      { id:'market-none', label:'Nicht erforderlich', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'market-google', label:'Google Shopping', requires:['market-google','market-apps'], weights:{ionos:2,strato:2,shopify:3} },
+      { id:'market-amazon-ebay', label:'Amazon / eBay', requires:['market-amazon-ebay'], weights:{ionos:3,strato:3,shopify:2} }
+    ]},
+  { id:'gdpr', title:'DSGVO & Rechtstexte', description:'Benötigst du vorgefertigte Cookie-Banner und Rechtstexte (Impressum/Datenschutz)?',
+    options:[
+      { id:'gdpr-yes', label:'Vorgefertigte DSGVO-Vorlagen', requires:['gdpr-templates'], weights:{ionos:3,strato:3,shopify:1} },
+      { id:'gdpr-no', label:'erstelle ich selbst', weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'inventory', title:'Inventar & Lager', description:'Brauchst du mehrere Lagerorte, Omnichannel-Sync oder POS-sync?',
+    options:[
+      { id:'inventory-simple', label:'Einfache Bestandsführung', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'inventory-adv', label:'Mehrere Lager / Omnichannel', requires:['inventory','inventory-adv'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'workflows', title:'Workflows / Automatisierung', description:'Sollen Bestell- & Lagerprozesse automatisiert werden (Rules/Flows)?',
+    options:[
+      { id:'wf-none', label:'Manuell / Keine Automatisierung', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'wf-yes', label:'Automatisierte Workflows', requires:['workflows-basic','workflows-adv'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'orderedit', title:'Manuelle Bestellanpassungen', description:'Muss manuell an Bestellungen etwas geändert werden (Positionen, Rabatte, Teilstornierung)?',
+    options:[
+      { id:'order-no', label:'Nicht nötig', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'order-yes', label:'Ja, Bestellanpassungen erforderlich', requires:['manual-orders'], weights:{ionos:3,strato:3,shopify:3} }
+    ]},
+  { id:'pos', title:'POS (Ladengeschäft) verbinden', description:'Wird eine Kassenanbindung (POS) für stationären Verkauf (im Laden) benötigt?',
+    options:[
+      { id:'pos-no', label:'Nein', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'pos-yes', label:'Ja, POS/Offline Verkauf', requires:['pos'], weights:{ionos:2,strato:2,shopify:3} }
+    ]},
+  { id:'support', title:'Support', description:'Welche Art von Support wünschst du? (24/7 Chat, Telefon, persönlicher Berater)',
+    options:[
+      { id:'support-basic', label:'Chat / E-Mail / FAQ', weights:{ionos:2,strato:2,shopify:2} },
+      { id:'support-phone', label:'Telefonischer Support wichtig', weights:{ionos:3,strato:3,shopify:2} },
+      { id:'support-advisor', label:'Persönlicher Berater (Projektbegleitung)', weights:{ionos:3,strato:2,shopify:1} }
+    ]}
+];
+
+/* -------------------------------
+   State & Helpers
+   ------------------------------- */
+let state = { answers:{}, step:0, requiredCaps:new Set() };
+const $screens = document.getElementById('screens');
+const $progress = document.getElementById('progressBar');
+
+function save(){ localStorage.setItem('wahloshop:v3', JSON.stringify({answers:state.answers, step:state.step})); }
+function load(){ try{ const s=JSON.parse(localStorage.getItem('wahloshop:v3')||'null'); if(s){ state.answers=s.answers||{}; state.step=s.step||0; } }catch(e){} }
+function updateRequired(){ state.requiredCaps = new Set(); for(const q of QUESTIONS){ const aid = state.answers[q.id]; if(!aid) continue; const opt = q.options.find(o=>o.id===aid); if(opt && opt.requires){ for(const r of opt.requires) state.requiredCaps.add(r); } } }
+
+function computeScores(){
+  // Sum weights and compute percent per provider
+  let totals = { ionos:0, strato:0, shopify:0 };
+  let maxPerQ = 3; let answered = 0;
+  for(const q of QUESTIONS){
+    const a = state.answers[q.id];
+    if(!a) continue;
+    answered++;
+    const opt = q.options.find(o=>o.id===a);
+    if(!opt || !opt.weights) continue;
+    totals.ionos += opt.weights.ionos || 0;
+    totals.strato += opt.weights.strato || 0;
+    totals.shopify += opt.weights.shopify || 0;
+  }
+  const max = Math.max(1, answered * maxPerQ);
+  const pct = { ionos: Math.round((totals.ionos/max)*100), strato: Math.round((totals.strato/max)*100), shopify: Math.round((totals.shopify/max)*100) };
+  return { totals, pct, answered };
+}
+
+// *** NEUE FUNKTION FÜR SOFT MATCHING ***
+function bestTier(provider){
+  let req = [...state.requiredCaps];
+  let best = null;
+  let bestCount = -1;
+
+  for(const t of provider.tiers){
+    let count = req.filter(r => t.capabilities.includes(r)).length;
+    if(count > bestCount){
+      best = t;
+      bestCount = count;
+    }
+  }
+
+  return {tier:best, matched:bestCount, total:req.length};
+}
+
+/* -------------------------------
+   Render single question
+   ------------------------------- */
+function renderQuestion(index){
+  const q = QUESTIONS[index];
+  const chosen = state.answers[q.id];
+  const chips = q.options.map(o=>{
+    const active = (chosen===o.id)? 'active':'';
+    return `<label class="chip ${active}" data-q="${q.id}" data-opt="${o.id}" tabindex="0">${o.label}</label>`;
+  }).join('');
+  $screens.innerHTML = `
+    <div class="card question">
+      <h2>${q.title}</h2>
+      <div class="explain">${q.description}</div>
+      <div class="chips">${chips}</div>
+      <div class="toolbar">
+        <div><span class="pill">${index+1} / ${QUESTIONS.length}</span></div>
+        <div>
+          <button id="prev" class="btn" ${index===0? 'disabled':''}>Zurück</button>
+          <button id="next" class="btn primary" ${chosen? '':'disabled'}>Weiter</button>
+        </div>
+      </div>
+    </div>
+  `;
+  // attach events
+  document.querySelectorAll('.chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const qid = el.getAttribute('data-q'); const oid = el.getAttribute('data-opt');
+      state.answers[qid] = oid; save(); render();
+    });
+    el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); el.click(); } });
+  });
+  document.getElementById('prev').addEventListener('click', ()=>{ state.step = Math.max(0, state.step-1); save(); render(); });
+  document.getElementById('next').addEventListener('click', ()=>{ state.step = Math.min(QUESTIONS.length, state.step+1); save(); render(); });
+}
+
+/* -------------------------------
+   Render results
+   ------------------------------- */
+function renderResults(){
+  updateRequired();
+  const { pct, totals, answered } = computeScores();
+  
+  // *** ANGEPASSTE LOGIK FÜR SOFT MATCHING ***
+  const providerCards = Object.values(PROVIDERS).map(p=>{
+    const {tier, matched, total} = bestTier(p);
+    const match = pct[p.id];
+    
+    const tierHtml = tier ? 
+      `<div class="plan">Vorschlag: <strong>${tier.name}</strong> – <span class="price">${tier.price} ${tier.currency} ${tier.period}</span></div>
+      <div style="margin-top:8px"><strong>Features:</strong> Erfüllt ${matched} von ${total} Anforderungen.</div>`
+      : `<div style="color:#b54646"><strong>Kein passender Tarif</strong><div class="explain">Kein Tarif erfüllt eine deiner gewählten Funktionen.</div></div>`;
+
+    return `
+      <div class="card" style="margin-bottom:12px">
+        <div class="grid" style="align-items:center">
+          <div class="col-6"><div style="display:flex;gap:10px;align-items:center"><div class="logo" style="width:44px;height:36px;border-radius:8px;background:#eef9ff;color:#0077cc;display:grid;place-items:center;font-weight:700">${p.name[0]}</div><div><strong>${p.name}</strong><div class="plan" style="color:var(--muted);font-size:13px">${tier?tier.name:'kein passender Tarif'}</div></div></div></div>
+          <div class="col-6" style="text-align:right"><div class="meter"><i style="width:${match}%"></i></div><div style="margin-top:8px"><strong>Match: ${match}%</strong></div></div>
+        </div>
+        <div style="margin-top:10px">${tierHtml}</div>
+        <div style="margin-top:12px"><a href="${p.url}" target="_blank" class="btn">Zum Anbieter</a></div>
+      </div>
+    `;
+  }).join('');
+
+  const summary = Object.values(pct).reduce((a,b)=>a+b,0)/3;
+  $screens.innerHTML = `
+    <div class="card">
+      <h2>Ergebnis</h2>
+      <div class="explain">Beantwortete Fragen: ${answered} von ${QUESTIONS.length}. Durchschnittlicher Match: ${Math.round(summary)}%.</div>
+    </div>
+    <div class="grid"><div class="col-12">${providerCards}</div></div>
+    <div class="toolbar" style="margin-top:12px"><div></div><div><button id="backToQuestions" class="btn">Zurück zu den Fragen</button> <button id="restart" class="btn primary">Neu starten</button></div></div>
+  `;
+  document.getElementById('backToQuestions').addEventListener('click', ()=>{ state.step = Math.max(0, QUESTIONS.length-1); save(); render(); });
+  document.getElementById('restart').addEventListener('click', ()=>{ localStorage.removeItem('wahloshop:v3'); state = {answers:{},step:0,requiredCaps:new Set()}; render(); });
+}
+
+/* -------------------------------
+   Render loop
+   ------------------------------- */
+function render(){
+  // Update progress
+  const total = QUESTIONS.length;
+  const current = Math.min(state.step, total);
+  const percent = Math.round((current/total)*100);
+  $progress.style.width = percent + '%';
+  if(state.step < QUESTIONS.length){
+    renderQuestion(state.step);
+  } else {
+    renderResults();
+  }
+}
+
+/* -------------------------------
+   Init & events
+   ------------------------------- */
+document.getElementById('reset').addEventListener('click', ()=>{ if(confirm('Alle Antworten löschen und neu starten?')){ localStorage.removeItem('wahloshop:v3'); state = {answers:{},step:0,requiredCaps:new Set()}; render(); } });
+window.addEventListener('load', ()=>{ document.getElementById('year').textContent = new Date().getFullYear(); load(); render(); });
+</script>
+</body>
+</html>
