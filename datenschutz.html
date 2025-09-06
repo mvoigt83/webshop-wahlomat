@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Datenschutzerklärung • Wahl-o-Shop</title>
+  <meta name="theme-color" content="#1976d2">
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#fff; --muted:#6b7280; --text:#0f172a; --primary:#1976d2;
+      --radius:12px; --elev: 0 6px 20px rgba(25,118,210,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--text);background:var(--bg)}
+    .container{max-width:1100px;margin:28px auto;padding:20px}
+    header{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,var(--primary),#1565c0);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:var(--elev)}
+    h1{margin:0;font-size:22px}
+    .subtitle{color:var(--muted);font-size:14px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 2px 8px rgba(16,24,40,.06);}
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .text-content h2 { margin-top: 0; font-size: 1.5rem; }
+    .text-content p, .text-content li { line-height: 1.6; color: var(--text); }
+    footer{color:var(--muted);font-size:13px;margin-top:22px;text-align:center}
+    .back-btn{display:inline-block;margin-top:20px;padding:8px 14px;border-radius:10px;border:1px solid #e6f0ff;text-decoration:none;color:var(--text);background:#fff}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">WS</div>
+      <div>
+        <h1>Wahl-o-Shop</h1>
+        <div class="subtitle">Datenschutzerklärung</div>
+      </div>
+    </header>
+
+    <main class="stack">
+      <div class="card text-content">
+        <h2>Datenschutz</h2>
+        <p>Ich, der Betreiber dieser Seiten, nehme den Schutz Ihrer persönlichen Daten sehr ernst. Ich behandele Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.</p>
+        <p>Die Nutzung meiner Webseite ist in der Regel ohne Angabe personenbezogener Daten möglich. Soweit auf meiner Seiten personenbezogene Daten (beispielsweise Name, Anschrift oder E-Mail-Adressen) erhoben werden, erfolgt dies, soweit möglich, stets auf freiwilliger Basis. Diese Daten werden ohne Ihre ausdrückliche Zustimmung nicht an Dritte weitergegeben.</p>
+        <p>Ich weise darauf hin, dass die Datenübertragung im Internet (z.B. bei der Kommunikation per E-Mail) Sicherheitslücken aufweisen kann. Ein lückenloser Schutz der Daten vor dem Zugriff durch Dritte ist nicht möglich.</p>
+
+        <h2>Cookies</h2>
+        <p>Die Webseite verwendet Cookies. Cookies richten auf Ihrem Rechner keinen Schaden an und enthalten keine Viren. Sie dienen dazu, das Angebot nutzerfreundlicher, effektiver und sicherer zu machen. Cookies sind kleine Textdateien, die auf Ihrem Rechner abgelegt werden und die Ihr Browser speichert.</p>
+        <p>Die meisten der verwendeten Cookies sind so genannte „Session-Cookies“. Sie werden nach Ende Ihres Besuchs automatisch gelöscht. Andere Cookies bleiben auf Ihrem Endgerät gespeichert, bis Sie diese löschen. Diese Cookies ermöglichen es, Ihren Browser beim nächsten Besuch wiederzuerkennen.</p>
+
+        <h2>Ihre Rechte</h2>
+        <p>Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Datenverarbeitung sowie ein Recht auf Berichtigung, Sperrung oder Löschung dieser Daten. Hierzu sowie zu weiteren Fragen zum Thema personenbezogene Daten können Sie sich jederzeit unter der im Impressum angegebenen Adresse an mich wenden.</p>
+      </div>
+      <a href="./index.html" class="back-btn">Zurück</a>
+    </main>
+
+    <footer>
+      © <span id="year"></span> Wahl-o-Shop — Datenbasis: Nutzerrecherche & Anbieterangaben. Keine Gewähr.<br>
+      <a href="./impressum.html" style="color:var(--muted);text-decoration:underline">Impressum</a> | <a href="./datenschutz.html" style="color:var(--muted);text-decoration:underline">Datenschutzerklärung</a>
+    </footer>
+  </div>
+<script>
+window.addEventListener('load', ()=>{ document.getElementById('year').textContent = new Date().getFullYear(); });
+</script>
+</body>
+</html>
