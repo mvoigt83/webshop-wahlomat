@@ -1,4 +1,4 @@
-const CACHE = 'wahloshop-cache-v1757132311';
+const CACHE = 'wahloshop-cache-v1757132654';
 const OFFLINE_URL = '.';
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
